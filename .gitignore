@@ -1,0 +1,24 @@
+# Python virtual environment
+venv/
+.venv/
+ENV/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Agent system files
+.agents/
+.gemini/
+scratch/
+task.md
+implementation_plan.md
+walkthrough.md
+*.log
+.system_generated/

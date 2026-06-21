@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Driven Marine Biodiversity Platform</title>
+    
+    <!-- External Styles & Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+    <style>
+        :root {
+            --primary-teal: #00e5ff;
+            --deep-ocean: #051329;
+            --mid-ocean: #0b2240;
+            --accent-coral: #ff7043;
+            --neon-blue: #0077ff;
+            --soft-emerald: #00e676;
+            --bright-gold: #ffd600;
+            --warning-red: #ff3d00;
+            --glass-bg: rgba(255, 255, 255, 0.04);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-hover: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #030a16 0%, #061830 50%, #030a16 100%);
+            color: #e0e6ed;
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+            color: #ffffff;
+        }
+
+        /* Particles Background */
+        .bubble-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .bubble {
+            position: absolute;
+            bottom: -50px;
+            background: radial-gradient(circle, rgba(0,229,255,0.15) 0%, rgba(0,119,255,0) 70%);
+            border-radius: 50%;
+            animation: floatUp 15s infinite linear;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) scale(0.5);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(-110vh) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        /* Glassmorphism Panel */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(0, 229, 255, 0.2);
+            box-shadow: 0 12px 40px rgba(0, 229, 255, 0.08);
+        }
+
+        /* Header */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(5, 19, 41, 0.7);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 16px 40px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            font-size: 2em;
+            animation: waveMotion 4s ease-in-out infinite;
+        }
+
+        @keyframes waveMotion {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(15deg); }
+        }
+
+        .logo-area h1 {
+            font-size: 1.6em;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            background: linear-gradient(45deg, #ffffff, var(--primary-teal));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--soft-emerald);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--soft-emerald);
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        /* Layout Grid */
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 32px 40px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Metrics grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .metric-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .metric-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .metric-title {
+            font-size: 0.95em;
+            color: #a0aec0;
+            font-weight: 500;
+        }
+
+        .metric-icon-circle {
+            font-size: 1.5em;
+            background: rgba(255,255,255,0.05);
+            padding: 8px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .metric-value {
+            font-size: 2.4em;
+            font-weight: 700;
+            background: linear-gradient(45deg, #ffffff, #cfd8dc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-family: 'Outfit', sans-serif;
+            margin-bottom: 8px;
+        }
+
+        .metric-trend {
+            font-size: 0.85em;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .trend-up { color: var(--soft-emerald); }
+        .trend-down { color: var(--warning-red); }
+        .trend-stable { color: var(--bright-gold); }
+
+        /* Map and Feed Grid */
+        .visuals-grid {
+            display: grid;
+            grid-template-columns: 2.2fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        /* Leaflet Map */
+        .map-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .map-title {
+            font-size: 1.25em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #map-container {
+            height: 420px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            z-index: 5;
+        }
+
+        /* Real-time event feed list */
+        .feed-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-height: 485px;
+        }
+
+        .feed-header {
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .feed-list {
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-right: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .feed-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .feed-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+        }
+
+        .feed-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 10px;
+            border-left: 3px solid var(--neon-blue);
+            transition: all 0.3s ease;
+            animation: itemSlideIn 0.3s ease-out;
+        }
+
+        @keyframes itemSlideIn {
+            from { transform: translateX(30px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .feed-item.alert { border-left-color: var(--warning-red); }
+        .feed-item.success { border-left-color: var(--soft-emerald); }
+        .feed-item.update { border-left-color: var(--primary-teal); }
+
+        .feed-item-icon { font-size: 1.2em; }
+        .feed-item-body { display: flex; flex-direction: column; }
+        .feed-item-text { font-size: 0.9em; font-weight: 500; }
+        .feed-item-time { font-size: 0.75em; color: #a0aec0; margin-top: 4px; }
+
+        /* Secondary Analytics Grid */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: 1.8fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .chart-box {
+            display: flex;
+            flex-direction: column;
+            height: 380px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .chart-select {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--glass-border);
+            color: #ffffff;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .chart-container-inner {
+            position: relative;
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Database Explorer Grid */
+        .explorer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .search-bar {
+            flex-grow: 1;
+            position: relative;
+        }
+
+        .search-bar input {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 10px 16px 10px 40px;
+            color: #ffffff;
+            font-size: 0.9em;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-bar input:focus {
+            border-color: var(--primary-teal);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .search-bar-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #718096;
+        }
+
+        .filter-tags {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .filter-tag {
+            padding: 6px 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-tag:hover, .filter-tag.active {
+            background: var(--primary-teal);
+            color: var(--deep-ocean);
+            font-weight: 600;
+            border-color: var(--primary-teal);
+        }
+
+        .species-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .species-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .species-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+        }
+
+        .species-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 10px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .species-item:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(0,229,255,0.3);
+            transform: translateX(4px);
+        }
+
+        .species-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-sustainable {
+            background: rgba(0, 230, 118, 0.15);
+            color: #00e676;
+            border: 1px solid rgba(0, 230, 118, 0.3);
+        }
+
+        .badge-moderate {
+            background: rgba(255, 214, 0, 0.15);
+            color: #ffd600;
+            border: 1px solid rgba(255, 214, 0, 0.3);
+        }
+
+        .badge-overfished {
+            background: rgba(255, 61, 0, 0.15);
+            color: #ff3d00;
+            border: 1px solid rgba(255, 61, 0, 0.3);
+        }
+
+        /* Action Buttons */
+        .controls-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            color: #ffffff;
+            background: var(--glass-bg);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 229, 255, 0.15);
+            border-color: var(--primary-teal);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-blue), #00d2ff);
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 119, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 22px rgba(0, 119, 255, 0.5);
+            background: linear-gradient(135deg, #0088ff, #00e5ff);
+        }
+
+        .btn-toggle-active {
+            background: linear-gradient(135deg, var(--accent-coral), #ffb300);
+            border: none;
+        }
+
+        /* Advanced Panel Section */
+        .advanced-section {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+            margin-bottom: 32px;
+        }
+
+        .advanced-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 24px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Molecular Heatmap Mock */
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            margin-top: 16px;
+        }
+
+        .heatmap-cell {
+            aspect-ratio: 1.5;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.75em;
+            font-weight: 600;
+            color: #030a16;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 10px rgba(255,255,255,0.1);
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(3, 10, 22, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .modal-content {
+            background: #0b1e36;
+            border: 1px solid var(--glass-border);
+            width: 90%;
+            max-width: 580px;
+            border-radius: 16px;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.6);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #a0aec0;
+            transition: color 0.2s ease;
+        }
+
+        .modal-close:hover {
+            color: #ffffff;
+        }
+
+        /* Footer */
+        footer {
+            background: rgba(5, 19, 41, 0.9);
+            border-top: 1px solid var(--glass-border);
+            padding: 40px 20px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 20px auto 30px;
+        }
+
+        .footer-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px;
+            transition: transform 0.2s ease;
+        }
+
+        .footer-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(0, 229, 255, 0.2);
+        }
+
+        .footer-card a {
+            color: var(--primary-teal);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer-card a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media(max-width: 1100px) {
+            .visuals-grid, .analytics-grid, .explorer-grid, .advanced-grid {
+                grid-template-columns: 1fr;
+            }
+            .feed-wrapper {
+                max-height: 350px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Particle bubble elements -->
+    <div class="bubble-container" id="bubbles"></div>
+
+    <!-- Header navigation -->
+    <header>
+        <div class="header-content">
+            <a href="#" class="logo-area">
+                <span class="logo-icon">🌊</span>
+                <h1>Marine Biodiversity AI Platform</h1>
+            </a>
+            <div class="status-pill">
+                <div class="pulse-dot" id="pulse-dot"></div>
+                <span style="font-size: 0.85em; font-weight: 500; color: #a0aec0;" id="connection-text">Sync Active</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <div class="dashboard-container">
+        
+        <!-- Metrics bar -->
+        <div class="metrics-grid">
+            <div class="glass-card metric-card">
+                <div class="metric-top">
+                    <span class="metric-title">🎯 Ecosystem Health Score</span>
+                    <span class="metric-icon-circle">📈</span>
+                </div>
+                <div class="metric-value" id="val-health">--</div>
+                <div class="metric-trend trend-up" id="val-health-trend">
+                    <span>↗</span> Calculating index...
+                </div>
+            </div>
+
+            <div class="glass-card metric-card">
+                <div class="metric-top">
+                    <span class="metric-title">🐟 Species Monitored</span>
+                    <span class="metric-icon-circle">🐠</span>
+                </div>
+                <div class="metric-value" id="val-species">--</div>
+                <div class="metric-trend trend-stable">
+                    <span>→</span> Standard profile
+                </div>
+            </div>
+
+            <div class="glass-card metric-card">
+                <div class="metric-top">
+                    <span class="metric-title">⚠️ Active Chemical Anomalies</span>
+                    <span class="metric-icon-circle">⚠️</span>
+                </div>
+                <div class="metric-value" id="val-anomalies">--</div>
+                <div class="metric-trend" id="val-anom-trend">
+                    <span>-</span> Polling sensors...
+                </div>
+            </div>
+
+            <div class="glass-card metric-card">
+                <div class="metric-top">
+                    <span class="metric-title">🧬 Shannon Genomic Index</span>
+                    <span class="metric-icon-circle">🧬</span>
+                </div>
+                <div class="metric-value" id="val-diversity">--</div>
+                <div class="metric-trend trend-up">
+                    <span>↗</span> High bio-diversity
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Map and Event Feed -->
+        <div class="visuals-grid">
+            <div class="glass-card map-wrapper">
+                <div class="map-header">
+                    <h3 class="map-title">🗺️ Monitoring Stations Map</h3>
+                    <span style="font-size: 0.8em; color: #a0aec0;">Click marker to check local parameters</span>
+                </div>
+                <div id="map-container"></div>
+            </div>
+
+            <div class="glass-card feed-wrapper">
+                <div class="feed-header">
+                    <h3>📡 Real-time Sensor Feed</h3>
+                    <span id="feed-counter" class="species-badge badge-sustainable" style="font-size: 0.7em;">Connected</span>
+                </div>
+                <div class="feed-list" id="feed-list-container">
+                    <!-- Dynamic feed entries loaded from API -->
+                </div>
+            </div>
+        </div>
+
+        <!-- History Plots and Zone summaries -->
+        <div class="analytics-grid">
+            <div class="glass-card chart-box">
+                <div class="chart-header">
+                    <h3 id="station-chart-title">📊 Parameter Timeline: Pacific Station Alpha</h3>
+                    <select class="chart-select" id="station-select" onchange="switchStationChart(this.value)">
+                        <option value="Pacific Station Alpha">Pacific Station Alpha</option>
+                        <option value="Atlantic Station Beta">Atlantic Station Beta</option>
+                        <option value="Coral Sea Monitor">Coral Sea Monitor</option>
+                        <option value="Arctic Research Point">Arctic Research Point</option>
+                        <option value="South Atlantic Deep">South Atlantic Deep</option>
+                    </select>
+                </div>
+                <div class="chart-container-inner">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+
+            <div class="glass-card chart-box">
+                <div class="chart-header">
+                    <h3>🎣 Fisheries Stock Status</h3>
+                </div>
+                <div class="chart-container-inner">
+                    <canvas id="doughnutChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Species Explorer and zone biodiversity -->
+        <div class="explorer-grid">
+            <div class="glass-card">
+                <h3 style="margin-bottom:16px;">🐠 Fisheries Database Explorer</h3>
+                <div class="search-row">
+                    <div class="search-bar">
+                        <span class="search-bar-icon">🔍</span>
+                        <input type="text" id="species-search-input" placeholder="Search by name..." oninput="handleSpeciesSearch()">
+                    </div>
+                </div>
+                <div class="filter-tags">
+                    <span class="filter-tag active" onclick="filterSpeciesList(event, 'all')">All</span>
+                    <span class="filter-tag" onclick="filterSpeciesList(event, 'sustainable')">Sustainable</span>
+                    <span class="filter-tag" onclick="filterSpeciesList(event, 'moderate')">At Risk</span>
+                    <span class="filter-tag" onclick="filterSpeciesList(event, 'overfished')">Overfished</span>
+                </div>
+                <div class="species-list" id="species-list-container">
+                    <!-- Load entries -->
+                </div>
+            </div>
+
+            <div class="glass-card chart-box">
+                <div class="chart-header">
+                    <h3>🧬 Molecular Biodiversity by Zone</h3>
+                </div>
+                <div class="chart-container-inner">
+                    <canvas id="molecularBarChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls Row -->
+        <div class="controls-row">
+            <button class="btn btn-primary" onclick="forceSensorVariation()">🔄 Force Sensor Shift</button>
+            <button class="btn" onclick="exportDataSnapshot()">💾 Download JSON Snapshot</button>
+            <button class="btn" id="btn-auto-update" onclick="toggleAutoUpdate()">⏱️ Auto Sync: ON</button>
+            <button class="btn" id="btn-toggle-advanced" onclick="toggleAdvancedView()">🔬 Toggle Advanced View</button>
+        </div>
+
+        <!-- Advanced Analysis Section (Hidden by Default) -->
+        <div class="advanced-section" id="advanced-panel">
+            <div class="glass-card" style="margin-bottom: 24px;">
+                <h2 style="margin-bottom: 12px;">🔬 Deep Molecular & Population Genetics Analysis</h2>
+                <p style="font-size: 0.9em; color:#a0aec0;">Advanced parameters compiled from environmental DNA (eDNA) high-throughput metabarcoding sequences.</p>
+            </div>
+            
+            <div class="advanced-grid">
+                <div class="glass-card">
+                    <h3>🧬 expected Heterozygosity (He) by eDNA Survey Zones</h3>
+                    <div style="height: 280px; position:relative; margin-top: 16px;">
+                        <canvas id="geneticsBarChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h3>🧪 Oceanographic Parameter Correlation Matrix</h3>
+                    <p style="font-size: 0.85em; color: #a0aec0; margin-top: 4px;">Pearson correlation coefficients showing relationships between variables.</p>
+                    <div class="heatmap-grid" id="heatmap-container">
+                        <!-- Heatmap elements generated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Species Details Modal Popup -->
+    <div class="modal-overlay" id="species-modal" onclick="closeSpeciesModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="modal-close" onclick="document.getElementById('species-modal').style.display='none'">&times;</span>
+            <h2 id="modal-species-name" style="margin-bottom: 6px;">Atlantic Bluefin Tuna</h2>
+            <div style="font-style: italic; color: #a0aec0; font-size: 0.9em; margin-bottom: 20px;" id="modal-scientific-name">Thunnus thynnus</div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div class="footer-card" style="margin:0;">
+                    <div style="font-size:0.8em; color:#a0aec0;">Biomass Ratio (B/Bmsy)</div>
+                    <div style="font-size:1.6em; font-weight:700; color:#fff;" id="modal-b-ratio">0.85</div>
+                </div>
+                <div class="footer-card" style="margin:0;">
+                    <div style="font-size:0.8em; color:#a0aec0;">Fishing Mortality (F/Fmsy)</div>
+                    <div style="font-size:1.6em; font-weight:700; color:#fff;" id="modal-f-ratio">1.10</div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h4 style="margin-bottom: 6px;">Conservation Profile</h4>
+                <div style="background:rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding: 12px; border-radius: 8px; font-size:0.9em;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                        <span>Monitoring Zone:</span>
+                        <strong id="modal-zone">Pacific</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                        <span>Average Catch Rate:</span>
+                        <strong id="modal-avg-catch">-- kg/hr</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>Status Indicator:</span>
+                        <span class="species-badge" id="modal-status-badge">Sustainable</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <h4 style="margin-bottom: 6px;">Key Ecosystem Risk Factors</h4>
+                <ul id="modal-risks" style="padding-left: 20px; font-size:0.95em;">
+                    <!-- items -->
+                </ul>
+            </div>
+
+            <div style="text-align:right;">
+                <button class="btn btn-primary" onclick="alert('Species added to platform alert system.')" style="padding: 8px 20px;">Add to Alert Watchlist</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer contact information -->
+    <footer>
+        <div style="max-width: 1200px; margin: 0 auto;">
+            <h3 style="color: var(--primary-teal); font-size: 1.3em;">👨‍💻 Platform Engineering Contact</h3>
+            
+            <div class="footer-grid">
+                <div class="footer-card">
+                    <div style="font-size: 1.3em; margin-bottom: 8px;">👤</div>
+                    <div style="font-size:0.8em; color:#a0aec0; margin-bottom: 4px;">Developer</div>
+                    <strong style="color:#ffffff;">Krishna Gupta</strong>
+                </div>
+
+                <div class="footer-card">
+                    <div style="font-size: 1.3em; margin-bottom: 8px;">📱</div>
+                    <div style="font-size:0.8em; color:#a0aec0; margin-bottom: 4px;">Phone</div>
+                    <a href="tel:+919993153109">+91 9993153109</a>
+                </div>
+
+                <div class="footer-card">
+                    <div style="font-size: 1.3em; margin-bottom: 8px;">✉️</div>
+                    <div style="font-size:0.8em; color:#a0aec0; margin-bottom: 4px;">Email</div>
+                    <a href="mailto:hg497kg@gmail.com">hg497kg@gmail.com</a>
+                </div>
+
+                <div class="footer-card">
+                    <div style="font-size: 1.3em; margin-bottom: 8px;">💼</div>
+                    <div style="font-size:0.8em; color:#a0aec0; margin-bottom: 4px;">LinkedIn</div>
+                    <a href="https://www.linkedin.com/in/hg171025kg" target="_blank">hg171025kg</a>
+                </div>
+            </div>
+
+            <p style="font-size:0.8em; color:#718096; margin-top:20px;">
+                © 2024 AI-Driven Unified Data Platform for Marine Biodiversity | Crafted for global ocean ecosystem sustainability
+            </p>
+        </div>
+    </footer>
+
+    <!-- App Logic Script -->
+    <script>
+        // Global variables
+        let autoSync = true;
+        let syncInterval;
+        let map;
+        let mapMarkers = {};
+        let timelineChart;
+        let doughnutChart;
+        let molecularBarChart;
+        let geneticsBarChart;
+        
+        let allSpeciesData = [];
+        let activeSpeciesFilter = 'all';
+
+        // Hybrid Offline Simulation Variables
+        let isMockMode = false;
+        let mockData = {};
+        let mockFeed = [];
+
+        // Particles background
+        function createParticles() {
+            const container = document.getElementById('bubbles');
+            const count = 35;
+            for(let i=0; i<count; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.style.left = `${Math.random() * 100}%`;
+                bubble.style.width = `${Math.random() * 10 + 4}px`;
+                bubble.style.height = bubble.style.width;
+                bubble.style.animationDuration = `${Math.random() * 12 + 8}s`;
+                bubble.style.animationDelay = `${Math.random() * 10}s`;
+                container.appendChild(bubble);
+            }
+        }
+
+        // Initialize Leaflet Map
+        function initLeafletMap() {
+            map = L.map('map-container').setView([25.0, -10.0], 2);
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 18
+            }).addTo(map);
+        }
+
+        // Setup client-side offline mock data fallback
+        function setupMockData() {
+            isMockMode = true;
+            document.getElementById('pulse-dot').style.background = '#ffd600';
+            document.getElementById('pulse-dot').style.boxShadow = '0 0 10px #ffd600';
+            document.getElementById('connection-text').textContent = "Offline Simulator";
+            document.getElementById('feed-counter').textContent = "Simulated";
+            document.getElementById('feed-counter').className = "species-badge badge-moderate";
+            
+            mockData = {
+                metrics: {
+                    ecosystem_health_score: 76.5,
+                    species_count: 5,
+                    anomalies_count: 5,
+                    diversity_index: 2.18
+                },
+                fisheries: {
+                    species_data: [
+                        { name: "Atlantic Bluefin Tuna", scientific_name: "Thunnus thynnus", status: "overfished", cpue: 12.5, trend: -0.15, location: "North Atlantic", b_ratio: 0.45, f_ratio: 1.4, average_catch: 12.5, risk_factors: ["Overfishing", "Ocean warming", "Spawning habitat disruption"] },
+                        { name: "Pacific Salmon", scientific_name: "Oncorhynchus kisutch", status: "moderate", cpue: 28.3, trend: -0.05, location: "North Pacific", b_ratio: 0.88, f_ratio: 1.05, average_catch: 28.3, risk_factors: ["River temperature spikes", "Dam construction", "Ocean acidification"] },
+                        { name: "European Sardine", scientific_name: "Sardina pilchardus", status: "sustainable", cpue: 145.7, trend: 0.08, location: "Mediterranean", b_ratio: 1.15, f_ratio: 0.75, average_catch: 145.7, risk_factors: ["Plankton availability shift", "Coastal pollution", "Predation pressure"] },
+                        { name: "Antarctic Krill", scientific_name: "Euphausia superba", status: "sustainable", cpue: 890.2, trend: 0.12, location: "Southern Ocean", b_ratio: 1.4, f_ratio: 0.5, average_catch: 890.2, risk_factors: ["Sea ice retreat", "Acidification on larvae", "Commercial harvest increase"] },
+                        { name: "North Sea Cod", scientific_name: "Gadus morhua", status: "overfished", cpue: 34.6, trend: -0.1, location: "North Sea", b_ratio: 0.52, f_ratio: 1.3, average_catch: 34.6, risk_factors: ["Warm water displacement", "Bycatch mortality", "Habitat loss"] }
+                    ]
+                },
+                molecular: {
+                    genetic_zones: {
+                        zones: ["Zone A", "Zone B", "Zone C", "Zone D", "Zone E", "Zone F", "Zone G"],
+                        diversity_values: [1.85, 1.92, 2.45, 1.25, 2.30, 1.70, 1.35]
+                    }
+                },
+                ai_insights: [
+                    "🚨 ECOSYSTEM STRESS ALERT: Thermal anomalies observed in Coral Reef waters.",
+                    "🐟 FISHERIES THREAT: Overfishing indicators triggered for Atlantic Bluefin Tuna and North Sea Cod.",
+                    "🌿 STOCK REPORT: Sustainable recovery observed in Antarctic Krill catch trends.",
+                    "🧬 GENOMIC RESILIENCE: High molecular biodiversity index (Shannon Mean: 2.18) observed."
+                ]
+            };
+            
+            // Build mock histories
+            mockData.stationHistories = {};
+            const stationsList = [
+                { name: "Pacific Station Alpha", lat: 36.7783, lon: -119.4179, zone: "Temperate", baseTemp: 15 },
+                { name: "Atlantic Station Beta", lat: 25.7617, lon: -80.1918, zone: "Subtropical", baseTemp: 22.5 },
+                { name: "Coral Sea Monitor", lat: -18.2871, lon: 147.6992, zone: "Tropical Reef", baseTemp: 27 },
+                { name: "Arctic Research Point", lat: 75.0, lon: 0.0, zone: "Polar", baseTemp: 1.5 },
+                { name: "South Atlantic Deep", lat: -23.5505, lon: -46.6333, zone: "Deep Sea", baseTemp: 2.5 }
+            ];
+
+            stationsList.forEach(s => {
+                const dates = [];
+                const temps = [];
+                const salinities = [];
+                const phs = [];
+                const now = new Date();
+                
+                for(let i=29; i>=0; i--) {
+                    const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                    dates.push(`${date.getMonth()+1}-${date.getDate()}`);
+                    temps.push(+(s.baseTemp + Math.sin(i/5) + Math.random()*0.5).toFixed(2));
+                    salinities.push(+(34 + Math.random()*1).toFixed(2));
+                    phs.push(+(8.1 + (Math.random()-0.5)*0.1).toFixed(2));
+                }
+                
+                mockData.stationHistories[s.name] = {
+                    dates: dates,
+                    temperature: temps,
+                    salinity: salinities,
+                    ph_levels: phs,
+                    lat: s.lat,
+                    lon: s.lon,
+                    zone: s.zone
+                };
+            });
+
+            mockFeed = [
+                { timestamp: new Date().toLocaleTimeString(), message: "Local static simulator active (no backend detected)", type: "success" },
+                { timestamp: new Date().toLocaleTimeString(), message: "Simulating 5 default monitoring stations", type: "update" },
+                { timestamp: new Date().toLocaleTimeString(), message: "AI Analysis Engine falling back to offline mode", type: "update" }
+            ];
+        }
+
+        // Load station coordinates and mark map
+        async function fetchStations() {
+            if (isMockMode) {
+                plotStationsMock();
+                return;
+            }
+            try {
+                const res = await fetch('/api/stations');
+                const result = await res.json();
+                if(result.status === 'success') {
+                    plotStations(result.stations);
+                }
+            } catch(e) {
+                console.error("Failed to load station map coordinates", e);
+            }
+        }
+
+        function plotStations(stations) {
+            stations.forEach(station => {
+                const color = station.status === 'Warning' ? '#ff3d00' : (station.status === 'Maintenance' ? '#ffd600' : '#00e676');
+                
+                if (mapMarkers[station.name]) {
+                    mapMarkers[station.name].setStyle({ fillColor: color });
+                } else {
+                    const marker = L.circleMarker([station.latitude, station.longitude], {
+                        radius: 9,
+                        fillColor: color,
+                        color: '#ffffff',
+                        weight: 1.5,
+                        opacity: 1,
+                        fillOpacity: 0.95
+                    }).addTo(map);
+                    
+                    marker.bindPopup(`
+                        <div style="color:#030a16; font-family:'Inter',sans-serif; min-width: 150px;">
+                            <strong style="font-size:1.1em; display:block; margin-bottom:5px;">${station.name}</strong>
+                            <div style="font-size:0.85em; margin-bottom:4px;"><strong>Zone:</strong> ${station.zone}</div>
+                            <div style="font-size:0.85em; margin-bottom:4px;"><strong>Temp:</strong> ${station.temperature}°C</div>
+                            <div style="font-size:0.85em; margin-bottom:4px;"><strong>Salinity:</strong> ${station.salinity} PSU</div>
+                            <div style="font-size:0.85em; margin-bottom:4px;"><strong>pH:</strong> ${station.ph}</div>
+                            <div style="font-size:0.85em; margin-bottom:8px;"><strong>Dissolved O₂:</strong> ${station.oxygen} mg/L</div>
+                            <button onclick="loadHistoryFor('${station.name}')" style="background:#0077ff; color:#fff; border:none; width:100%; padding:5px; border-radius:5px; font-weight:600; cursor:pointer;">Show Timeline History</button>
+                        </div>
+                    `);
+                    
+                    mapMarkers[station.name] = marker;
+                }
+            });
+        }
+
+        function plotStationsMock() {
+            Object.keys(mockData.stationHistories).forEach(name => {
+                const h = mockData.stationHistories[name];
+                const lastTemp = h.temperature[h.temperature.length - 1];
+                const lastSal = h.salinity[h.salinity.length - 1];
+                const lastPh = h.ph_levels[h.ph_levels.length - 1];
+                
+                const isWarning = lastTemp > 28.5 || lastTemp < 0.5;
+                const color = isWarning ? '#ff3d00' : '#00e676';
+                
+                if (mapMarkers[name]) {
+                    mapMarkers[name].setStyle({ fillColor: color });
+                } else {
+                    const marker = L.circleMarker([h.lat, h.lon], {
+                        radius: 9,
+                        fillColor: color,
+                        color: '#ffffff',
+                        weight: 1.5,
+                        opacity: 1,
+                        fillOpacity: 0.95
+                    }).addTo(map);
+                    
+                    marker.bindPopup(`
+                        <div style="color:#030a16; font-family:'Inter',sans-serif; min-width: 150px;">
+                            <strong style="font-size:1.1em; display:block; margin-bottom:5px;">${name}</strong>
+                            <div style="font-size:0.85em; margin-bottom:4px;"><strong>Zone:</strong> ${h.zone}</div>
+                            <div style="font-size:0.85em; margin-bottom:4px;"><strong>Temp:</strong> ${lastTemp}°C</div>
+                            <div style="font-size:0.85em; margin-bottom:4px;"><strong>Salinity:</strong> ${lastSal} PSU</div>
+                            <div style="font-size:0.85em; margin-bottom:4px;"><strong>pH:</strong> ${lastPh}</div>
+                            <button onclick="loadHistoryFor('${name}')" style="background:#0077ff; color:#fff; border:none; width:100%; padding:5px; border-radius:5px; font-weight:600; cursor:pointer;">Show Timeline History</button>
+                        </div>
+                    `);
+                    mapMarkers[name] = marker;
+                }
+            });
+        }
+
+        // Switch historical chart station
+        async function loadHistoryFor(stationName) {
+            document.getElementById('station-select').value = stationName;
+            switchStationChart(stationName);
+        }
+
+        async function switchStationChart(stationName) {
+            document.getElementById('station-chart-title').innerHTML = `📊 Parameter Timeline: ${stationName}`;
+            if (isMockMode) {
+                updateTimelineChart(mockData.stationHistories[stationName]);
+                return;
+            }
+            try {
+                const res = await fetch(`/api/station-history/${stationName}`);
+                const result = await res.json();
+                if(result.status === 'success') {
+                    updateTimelineChart(result.history);
+                }
+            } catch(e) {
+                console.error("Failed to load historical timeline", e);
+            }
+        }
+
+        // Timeline Line Chart
+        function updateTimelineChart(history) {
+            const ctx = document.getElementById('timelineChart').getContext('2d');
+            
+            if (timelineChart) {
+                timelineChart.destroy();
+            }
+
+            timelineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: history.dates,
+                    datasets: [
+                        {
+                            label: 'Temp (°C)',
+                            data: history.temperature,
+                            borderColor: '#ff7043',
+                            backgroundColor: 'rgba(255, 112, 67, 0.05)',
+                            tension: 0.35,
+                            fill: true,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Salinity (PSU)',
+                            data: history.salinity,
+                            borderColor: '#00e5ff',
+                            backgroundColor: 'rgba(0, 229, 255, 0.02)',
+                            tension: 0.35,
+                            fill: true,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: 'pH Level',
+                            data: history.ph_levels,
+                            borderColor: '#ffd600',
+                            backgroundColor: 'transparent',
+                            tension: 0.35,
+                            yAxisID: 'y2'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#a0aec0', font: { size: 11 } } },
+                        tooltip: { backgroundColor: '#0b1e36', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1 }
+                    },
+                    scales: {
+                        x: { 
+                            ticks: { color: '#a0aec0' }, 
+                            grid: { color: 'rgba(255,255,255,0.03)' } 
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'Temp (°C)', color: '#ff7043' },
+                            ticks: { color: '#a0aec0' },
+                            grid: { color: 'rgba(255,255,255,0.03)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'Salinity (PSU)', color: '#00e5ff' },
+                            ticks: { color: '#a0aec0' },
+                            grid: { drawOnChartArea: false }
+                        },
+                        y2: {
+                            type: 'linear',
+                            display: false,
+                            position: 'right',
+                            title: { display: false },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Stock Sustainability Doughnut Chart
+        function drawStockChart(speciesData) {
+            const ctx = document.getElementById('doughnutChart').getContext('2d');
+            
+            const counts = { Sustainable: 0, Moderate: 0, Overfished: 0 };
+            speciesData.forEach(s => {
+                const stat = s.status.charAt(0).toUpperCase() + s.status.slice(1);
+                counts[stat] = (counts[stat] || 0) + 1;
+            });
+
+            if (doughnutChart) {
+                doughnutChart.destroy();
+            }
+
+            doughnutChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Sustainable', 'At Risk', 'Overfished'],
+                    datasets: [{
+                        data: [counts.Sustainable, counts.Moderate, counts.Overfished],
+                        backgroundColor: ['#00e676', '#ffd600', '#ff3d00'],
+                        borderWidth: 2,
+                        borderColor: '#0b2240',
+                        hoverOffset: 12
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            labels: { color: '#a0aec0', boxWidth: 12 },
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Molecular Biodiversity Bar Chart
+        function drawMolecularChart(molecularData) {
+            const ctx = document.getElementById('molecularBarChart').getContext('2d');
+            
+            if (molecularBarChart) {
+                molecularBarChart.destroy();
+            }
+
+            molecularBarChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: molecularData.zones,
+                    datasets: [{
+                        label: 'Shannon Diversity (H\')',
+                        data: molecularData.diversity_values,
+                        backgroundColor: 'rgba(0, 229, 255, 0.4)',
+                        borderColor: '#00e5ff',
+                        borderWidth: 1.5,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.03)' } },
+                        y: { 
+                            ticks: { color: '#a0aec0' }, 
+                            grid: { color: 'rgba(255,255,255,0.03)' },
+                            title: { display: true, text: 'H\' Index', color: '#a0aec0' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load complete dashboard packet
+        async function loadDashboard() {
+            if (isMockMode) {
+                loadDashboardMock();
+                return;
+            }
+            try {
+                const res = await fetch('/api/dashboard-data');
+                const result = await res.json();
+                if(result.status === 'success') {
+                    const d = result.data;
+                    
+                    // Metrics update
+                    document.getElementById('val-health').textContent = d.metrics.ecosystem_health_score.toFixed(1);
+                    document.getElementById('val-species').textContent = d.metrics.species_count;
+                    document.getElementById('val-anomalies').textContent = d.metrics.anomalies_count;
+                    document.getElementById('val-diversity').textContent = d.metrics.diversity_index.toFixed(2);
+                    
+                    // Update anomaly label
+                    const anomTrend = document.getElementById('val-anom-trend');
+                    if (d.metrics.anomalies_count > 30) {
+                        anomTrend.className = "metric-trend trend-down";
+                        anomTrend.innerHTML = "<span>⚠️</span> Action Required";
+                    } else {
+                        anomTrend.className = "metric-trend trend-up";
+                        anomTrend.innerHTML = "<span>✅</span> Stable baselines";
+                    }
+                    
+                    // Save and draw species list
+                    allSpeciesData = d.fisheries.species_data;
+                    renderSpeciesList();
+                    
+                    // Charts
+                    drawStockChart(d.fisheries.species_data);
+                    drawMolecularChart(d.molecular.genetic_zones);
+                    
+                    if(!timelineChart) {
+                        updateTimelineChart(d.oceanographic.trend_data);
+                    }
+                }
+            } catch(e) {
+                console.error("Error loading dashboard data", e);
+            }
+        }
+
+        function loadDashboardMock() {
+            const d = mockData;
+            document.getElementById('val-health').textContent = d.metrics.ecosystem_health_score.toFixed(1);
+            document.getElementById('val-species').textContent = d.metrics.species_count;
+            document.getElementById('val-anomalies').textContent = d.metrics.anomalies_count;
+            document.getElementById('val-diversity').textContent = d.metrics.diversity_index.toFixed(2);
+            
+            const anomTrend = document.getElementById('val-anom-trend');
+            if (d.metrics.anomalies_count > 7) {
+                anomTrend.className = "metric-trend trend-down";
+                anomTrend.innerHTML = "<span>⚠️</span> Action Required";
+            } else {
+                anomTrend.className = "metric-trend trend-up";
+                anomTrend.innerHTML = "<span>✅</span> Stable baselines";
+            }
+            
+            allSpeciesData = d.fisheries.species_data;
+            renderSpeciesList();
+            
+            drawStockChart(d.fisheries.species_data);
+            drawMolecularChart(d.molecular.genetic_zones);
+            
+            if(!timelineChart) {
+                updateTimelineChart(d.stationHistories["Pacific Station Alpha"]);
+            }
+        }
+
+        // Poll real-time feed
+        async function fetchFeed() {
+            if (isMockMode) {
+                renderFeed(mockFeed);
+                return;
+            }
+            try {
+                const res = await fetch('/api/realtime-feed');
+                const result = await res.json();
+                if(result.status === 'success') {
+                    renderFeed(result.feed);
+                }
+            } catch(e) {
+                console.error("Error fetching activity feed logs", e);
+            }
+        }
+
+        function renderFeed(logs) {
+            const container = document.getElementById('feed-list-container');
+            container.innerHTML = '';
+            
+            logs.forEach(log => {
+                const feedClass = log.type === 'alert' ? 'alert' : (log.type === 'success' ? 'success' : 'update');
+                const icon = log.type === 'alert' ? '⚠️' : (log.type === 'success' ? '✅' : '🔄');
+                
+                const item = document.createElement('div');
+                item.className = `feed-item ${feedClass}`;
+                item.innerHTML = `
+                    <span class="feed-item-icon">${icon}</span>
+                    <div class="feed-item-body">
+                        <span class="feed-item-text">${log.message}</span>
+                        <span class="feed-item-time">${log.timestamp}</span>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Species Database search/filter
+        function renderSpeciesList() {
+            const container = document.getElementById('species-list-container');
+            container.innerHTML = '';
+            
+            const searchVal = document.getElementById('species-search-input').value.toLowerCase();
+            
+            allSpeciesData.forEach(sp => {
+                const matchesSearch = sp.name.toLowerCase().includes(searchVal) || sp.scientific_name.toLowerCase().includes(searchVal);
+                const matchesFilter = activeSpeciesFilter === 'all' || sp.status === activeSpeciesFilter;
+                
+                if (matchesSearch && matchesFilter) {
+                    const item = document.createElement('div');
+                    item.className = 'species-item';
+                    item.onclick = () => openSpeciesDetails(sp);
+                    
+                    const badgeClass = sp.status === 'sustainable' ? 'badge-sustainable' : (sp.status === 'overfished' ? 'badge-overfished' : 'badge-moderate');
+                    
+                    item.innerHTML = `
+                        <div>
+                            <strong style="display:block;">${sp.name}</strong>
+                            <span style="font-size:0.8em; color:#a0aec0; font-style:italic;">${sp.scientific_name}</span>
+                        </div>
+                        <span class="species-badge ${badgeClass}">${sp.status}</span>
+                    `;
+                    container.appendChild(item);
+                }
+            });
+        }
+
+        function handleSpeciesSearch() {
+            renderSpeciesList();
+        }
+
+        function filterSpeciesList(e, status) {
+            activeSpeciesFilter = status;
+            
+            document.querySelectorAll('.filter-tag').forEach(tag => {
+                tag.classList.remove('active');
+            });
+            e.target.classList.add('active');
+            
+            renderSpeciesList();
+        }
+
+        // Species Modal Details popup
+        function openSpeciesDetails(species) {
+            document.getElementById('modal-species-name').textContent = species.name;
+            document.getElementById('modal-scientific-name').textContent = species.scientific_name;
+            document.getElementById('modal-b-ratio').textContent = species.b_ratio.toFixed(2);
+            document.getElementById('modal-f-ratio').textContent = species.f_ratio.toFixed(2);
+            document.getElementById('modal-zone').textContent = species.location;
+            document.getElementById('modal-avg-catch').textContent = `${species.average_catch.toFixed(1)} kg/hour`;
+            
+            const badge = document.getElementById('modal-status-badge');
+            badge.className = `species-badge ${species.status === 'sustainable' ? 'badge-sustainable' : (species.status === 'overfished' ? 'badge-overfished' : 'badge-moderate')}`;
+            badge.textContent = species.status;
+
+            const risksContainer = document.getElementById('modal-risks');
+            risksContainer.innerHTML = '';
+            species.risk_factors.forEach(risk => {
+                const li = document.createElement('li');
+                li.style.color = '#e0e6ed';
+                li.style.marginBottom = '6px';
+                li.textContent = risk;
+                risksContainer.appendChild(li);
+            });
+
+            document.getElementById('species-modal').style.display = 'flex';
+        }
+
+        function closeSpeciesModal(event) {
+            if(event.target.id === 'species-modal') {
+                document.getElementById('species-modal').style.display = 'none';
+            }
+        }
+
+        // Force manual parameters variations
+        async function forceSensorVariation() {
+            if (isMockMode) {
+                simulateMockDataUpdate();
+                loadDashboardMock();
+                renderFeed(mockFeed);
+                plotStationsMock();
+                alert("Simulated sensor shifts complete! Diurnal cycles advanced.");
+                return;
+            }
+            try {
+                const res = await fetch('/api/update-data');
+                const result = await res.json();
+                if(result.status === 'success') {
+                    loadDashboard();
+                    fetchFeed();
+                    fetchStations();
+                    alert("Sensor readings updated! Diurnal cycles advanced.");
+                }
+            } catch(e) {
+                console.error("Manual variation trigger failed", e);
+            }
+        }
+
+        // Download snapshot
+        async function exportDataSnapshot() {
+            if (isMockMode) {
+                const blob = new Blob([JSON.stringify({ export_timestamp: new Date().toISOString(), platform_snapshot: mockData }, null, 2)], {type : 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `marine_platform_simulated_snapshot_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                return;
+            }
+            try {
+                const res = await fetch('/api/export-data');
+                const data = await res.json();
+                
+                const blob = new Blob([JSON.stringify(data, null, 2)], {type : 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `marine_platform_snapshot_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+            } catch(e) {
+                alert("Failed to export JSON report.");
+            }
+        }
+
+        // Auto Sync Toggle
+        function toggleAutoUpdate() {
+            autoSync = !autoSync;
+            const btn = document.getElementById('btn-auto-update');
+            if(autoSync) {
+                btn.textContent = "⏱️ Auto Sync: ON";
+                btn.className = "btn";
+                startSync();
+            } else {
+                btn.textContent = "⏱️ Auto Sync: OFF";
+                btn.className = "btn btn-toggle-active";
+                clearInterval(syncInterval);
+            }
+        }
+
+        function startSync() {
+            clearInterval(syncInterval);
+            syncInterval = setInterval(() => {
+                if (isMockMode) {
+                    simulateMockDataUpdate();
+                    loadDashboardMock();
+                    renderFeed(mockFeed);
+                    plotStationsMock();
+                } else {
+                    loadDashboard();
+                    fetchFeed();
+                    fetchStations();
+                }
+            }, 5000);
+        }
+
+        // Client-side simulation update loop
+        function simulateMockDataUpdate() {
+            const stations = Object.keys(mockData.stationHistories);
+            const station = stations[Math.floor(Math.random() * stations.length)];
+            const history = mockData.stationHistories[station];
+            
+            const lastIdx = history.temperature.length - 1;
+            const drift = (Math.random() - 0.5) * 0.4;
+            const newTemp = +(history.temperature[lastIdx] + drift).toFixed(2);
+            history.temperature[lastIdx] = newTemp;
+            
+            const isAnom = newTemp > 28.5 || newTemp < 0.5;
+            const logType = isAnom ? "alert" : "update";
+            
+            const timeStr = new Date().toLocaleTimeString();
+            const logMsg = isAnom
+                ? `🚨 Alert: Temperature anomaly triggered at ${station}: ${newTemp}°C!`
+                : `🔄 Sync: Updated ${station} temperature sensor to ${newTemp}°C`;
+            
+            mockFeed.unshift({
+                timestamp: timeStr,
+                message: logMsg,
+                type: logType
+            });
+            if(mockFeed.length > 15) mockFeed.pop();
+            
+            // Adjust metrics
+            mockData.metrics.anomalies_count += isAnom ? 1 : (Math.random() > 0.85 ? -1 : 0);
+            mockData.metrics.anomalies_count = Math.max(0, mockData.metrics.anomalies_count);
+            mockData.metrics.ecosystem_health_score += (isAnom ? -1.5 : 0.2);
+            mockData.metrics.ecosystem_health_score = Math.max(10.0, Math.min(100.0, mockData.metrics.ecosystem_health_score));
+        }
+
+        // Toggle Advanced Genomics
+        function toggleAdvancedView() {
+            const panel = document.getElementById('advanced-panel');
+            const btn = document.getElementById('btn-toggle-advanced');
+            const isClosed = panel.style.display === 'none' || panel.style.display === '';
+            
+            if(isClosed) {
+                panel.style.display = 'block';
+                btn.textContent = "🔬 Hide Advanced Analytics";
+                btn.className = "btn btn-primary";
+                loadAdvancedGenomics();
+                generateAdvancedHeatmap();
+            } else {
+                panel.style.display = 'none';
+                btn.textContent = "🔬 Toggle Advanced View";
+                btn.className = "btn";
+            }
+        }
+
+        async function loadAdvancedGenomics() {
+            if (isMockMode) {
+                const mockGenomics = [
+                    { zone: "Zone A", expected_heterozygosity: 0.72, inbreeding_coefficient: 0.05 },
+                    { zone: "Zone B", expected_heterozygosity: 0.78, inbreeding_coefficient: -0.02 },
+                    { zone: "Zone C", expected_heterozygosity: 0.84, inbreeding_coefficient: 0.08 },
+                    { zone: "Zone D", expected_heterozygosity: 0.61, inbreeding_coefficient: 0.12 },
+                    { zone: "Zone E", expected_heterozygosity: 0.81, inbreeding_coefficient: 0.02 },
+                    { zone: "Zone F", expected_heterozygosity: 0.69, inbreeding_coefficient: 0.06 },
+                    { zone: "Zone G", expected_heterozygosity: 0.64, inbreeding_coefficient: 0.10 }
+                ];
+                drawGeneticsChart(mockGenomics);
+                return;
+            }
+            try {
+                const res = await fetch('/api/advanced-genomics');
+                const result = await res.json();
+                if(result.status === 'success') {
+                    drawGeneticsChart(result.genomics);
+                }
+            } catch(e) {
+                console.error("Failed to load genomics data", e);
+            }
+        }
+
+        function drawGeneticsChart(genomics) {
+            const ctx = document.getElementById('geneticsBarChart').getContext('2d');
+            
+            if (geneticsBarChart) {
+                geneticsBarChart.destroy();
+            }
+
+            const labels = genomics.map(g => g.zone);
+            const heData = genomics.map(g => g.expected_heterozygosity);
+            const fisData = genomics.map(g => g.inbreeding_coefficient);
+
+            geneticsBarChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Expected Heterozygosity (He)',
+                            data: heData,
+                            backgroundColor: 'rgba(0, 229, 255, 0.6)',
+                            borderColor: '#00e5ff',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Inbreeding Coeff (Fis)',
+                            data: fisData,
+                            backgroundColor: 'rgba(255, 112, 67, 0.6)',
+                            borderColor: '#ff7043',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#a0aec0' } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.03)' } },
+                        y: { ticks: { color: '#a0aec0' }, grid: { color: 'rgba(255,255,255,0.03)' } }
+                    }
+                }
+            });
+        }
+
+        function generateAdvancedHeatmap() {
+            const container = document.getElementById('heatmap-container');
+            container.innerHTML = '';
+            
+            const params = ["Temp", "Salinity", "pH", "DO", "Chl-a", "Turbid"];
+            
+            const matrix = [
+                [1.00,  0.42,  0.15, -0.78,  0.35,  0.10], 
+                [0.42,  1.00,  0.22, -0.32,  0.08, -0.05], 
+                [0.15,  0.22,  1.00,  0.18,  0.12, -0.20], 
+                [-0.78, -0.32,  0.18,  1.00, -0.45, -0.15], 
+                [0.35,  0.08,  0.12, -0.45,  1.00,  0.55], 
+                [0.10, -0.05, -0.20, -0.15,  0.55,  1.00]  
+            ];
+
+            for(let r=0; r<6; r++) {
+                for(let c=0; c<6; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'heatmap-cell';
+                    
+                    const val = matrix[r][c];
+                    cell.textContent = val.toFixed(2);
+                    
+                    if(val >= 0) {
+                        cell.style.background = `rgba(0, 229, 255, ${val * 0.85})`;
+                    } else {
+                        cell.style.background = `rgba(255, 112, 67, ${Math.abs(val) * 0.85})`;
+                    }
+                    
+                    cell.title = `${params[r]} vs ${params[c]}: ${val.toFixed(2)}`;
+                    container.appendChild(cell);
+                }
+            }
+        }
+
+        // Start initialization
+        document.addEventListener('DOMContentLoaded', async () => {
+            createParticles();
+            initLeafletMap();
+            
+            // Check if server endpoints are responsive, else fallback to static client simulation
+            try {
+                const check = await fetch('/api/stations');
+                if(!check.ok) throw new Error("Offline");
+                
+                // Loaded online
+                await loadDashboard();
+                await fetchFeed();
+                await fetchStations();
+                startSync();
+            } catch(e) {
+                console.log("⚠️ Backend API server unreachable. Initializing Client-side Static Simulation fallback mode.");
+                setupMockData();
+                loadDashboardMock();
+                fetchFeed();
+                fetchStations();
+                startSync();
+            }
+        });
+    </script>
+</body>
+</html>
