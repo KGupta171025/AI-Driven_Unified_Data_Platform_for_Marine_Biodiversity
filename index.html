@@ -769,6 +769,47 @@
             border: 1px solid rgba(0,0,0,0.08);
         }
 
+        /* Simple Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            margin-left: 6px;
+            font-size: 0.85em;
+            color: #718096;
+            transition: color 0.2s;
+        }
+        .tooltip:hover {
+            color: var(--primary-teal);
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 220px;
+            background-color: #0b1e36;
+            color: #fff;
+            text-align: center;
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 8px;
+            position: absolute;
+            z-index: 100;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8em;
+            font-family: 'Inter', sans-serif;
+            font-weight: normal;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            pointer-events: none;
+            line-height: 1.4;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
         /* Responsive */
         @media(max-width: 1100px) {
             .visuals-grid, .analytics-grid, .explorer-grid, .advanced-grid {
@@ -805,6 +846,35 @@
     <!-- Main Content Container -->
     <div class="dashboard-container">
         
+        <!-- Collapsible Legend & User Guide Card -->
+        <div class="glass-card" style="margin-bottom: 32px; padding: 20px; border-left: 4px solid var(--primary-teal); border-radius: 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleGuide()">
+                <h3 style="margin:0; display:flex; align-items:center; gap:8px; font-size: 1.15em;">📖 Platform Interactive Legend & User Guide</h3>
+                <span id="guide-toggle-icon" style="font-size:1.15em; font-weight: bold; transition: transform 0.3s; color: var(--primary-teal);">▲</span>
+            </div>
+            <div id="guide-body" style="margin-top: 15px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:20px; font-size:0.85em; color:#cfd8dc; line-height:1.6;">
+                    <div>
+                        <strong style="color:var(--primary-teal); display:block; margin-bottom:6px;">🗺️ 1. Monitoring GIS Map</strong>
+                        Click colored station points on the GIS ocean map to load local real-time chemical sensors. 
+                        🟢 Green indicates active normal operation, 🟡 indicates maintenance, and 🔴 flags active environmental anomalies.
+                    </div>
+                    <div>
+                        <strong style="color:var(--accent-coral); display:block; margin-bottom:6px;">📈 2. Real-Time ML Anomaly Detection</strong>
+                        Every 10s, backend sensors drift. An unsupervised **Isolation Forest** ML algorithm processes salinity, temp, pH, dissolved oxygen, chlorophyll, and turbidity to detect outliers, triggering warnings in the event feed.
+                    </div>
+                    <div>
+                        <strong style="color:var(--soft-emerald); display:block; margin-bottom:6px;">🎣 3. Fisheries Stock Status</strong>
+                        Use the Fisheries Catalog to search species. Click on a species row to view population sustainability ratios ($B/B_{MSY}$ biomass levels and $F/F_{MSY}$ fishing pressure levels) in layperson's terms.
+                    </div>
+                    <div>
+                        <strong style="color:var(--bright-gold); display:block; margin-bottom:6px;">🧬 4. Environmental DNA (eDNA)</strong>
+                        Click **"Toggle Advanced View"** at the bottom to view molecular genomic indices, Pearson correlation matrices, and align target species barcode sequences to check environmental matches.
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Simulation Control Panel -->
         <div class="glass-card" style="margin-bottom: 32px; padding: 20px; border-radius: 16px;">
             <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleSimControl()">
@@ -861,7 +931,10 @@
         <div class="metrics-grid">
             <div class="glass-card metric-card">
                 <div class="metric-top">
-                    <span class="metric-title">🎯 Ecosystem Health Score</span>
+                    <span class="metric-title">
+                        🎯 Ecosystem Health Score
+                        <span class="tooltip">ℹ️<span class="tooltiptext">Combined index of water stability, oxygen content, and species diversity. 100% is perfect, &lt;60% indicates ecological stress.</span></span>
+                    </span>
                     <span class="metric-icon-circle">📈</span>
                 </div>
                 <div class="metric-value" id="val-health">--</div>
@@ -872,7 +945,10 @@
 
             <div class="glass-card metric-card">
                 <div class="metric-top">
-                    <span class="metric-title">🐟 Species Monitored</span>
+                    <span class="metric-title">
+                        🐟 Species Monitored
+                        <span class="tooltip">ℹ️<span class="tooltiptext">Number of key biological species actively tracked in our fisheries assessment catalog database.</span></span>
+                    </span>
                     <span class="metric-icon-circle">🐠</span>
                 </div>
                 <div class="metric-value" id="val-species">--</div>
@@ -883,7 +959,10 @@
 
             <div class="glass-card metric-card">
                 <div class="metric-top">
-                    <span class="metric-title">⚠️ Active Chemical Anomalies</span>
+                    <span class="metric-title">
+                        ⚠️ Active Chemical Anomalies
+                        <span class="tooltip">ℹ️<span class="tooltiptext">Number of unusual sensor combinations currently flagged as outliers by the AI unsupervised Isolation Forest model.</span></span>
+                    </span>
                     <span class="metric-icon-circle">⚠️</span>
                 </div>
                 <div class="metric-value" id="val-anomalies">--</div>
@@ -894,7 +973,10 @@
 
             <div class="glass-card metric-card">
                 <div class="metric-top">
-                    <span class="metric-title">🧬 Shannon Genomic Index</span>
+                    <span class="metric-title">
+                        🧬 Shannon Genomic Index
+                        <span class="tooltip">ℹ️<span class="tooltiptext">Mathematical measure of species diversity and evenness computed from environmental DNA (eDNA) sample concentration tables.</span></span>
+                    </span>
                     <span class="metric-icon-circle">🧬</span>
                 </div>
                 <div class="metric-value" id="val-diversity">--</div>
@@ -1075,11 +1157,17 @@
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
                 <div class="footer-card" style="margin:0;">
-                    <div style="font-size:0.8em; color:#a0aec0;">Biomass Ratio (B/Bmsy)</div>
+                    <div style="font-size:0.8em; color:#a0aec0;">
+                        Biomass Ratio (B/Bmsy)
+                        <span class="tooltip">ℹ️<span class="tooltiptext">Indicates spawning stock size. &gt;1.0 represents healthy/sustainable fish populations. &lt;1.0 represents depleted/overfished stocks.</span></span>
+                    </div>
                     <div style="font-size:1.6em; font-weight:700; color:#fff;" id="modal-b-ratio">0.85</div>
                 </div>
                 <div class="footer-card" style="margin:0;">
-                    <div style="font-size:0.8em; color:#a0aec0;">Fishing Mortality (F/Fmsy)</div>
+                    <div style="font-size:0.8em; color:#a0aec0;">
+                        Fishing Mortality (F/Fmsy)
+                        <span class="tooltip">ℹ️<span class="tooltiptext">Indicates fishing pressure. &lt;1.0 is sustainable level, &gt;1.0 indicates overfishing (catching faster than reproduction rate).</span></span>
+                    </div>
                     <div style="font-size:1.6em; font-weight:700; color:#fff;" id="modal-f-ratio">1.10</div>
                 </div>
             </div>
@@ -1233,6 +1321,22 @@
                 currentTheme = 'coral-light';
             } else {
                 currentTheme = 'deep-ocean';
+            }
+        }
+
+        function toggleGuide() {
+            const body = document.getElementById('guide-body');
+            const icon = document.getElementById('guide-toggle-icon');
+            const isClosed = body.style.display === 'none' || body.style.display === '';
+            
+            if (isClosed) {
+                body.style.display = 'block';
+                icon.style.transform = 'rotate(180deg)';
+                icon.textContent = '▲';
+            } else {
+                body.style.display = 'none';
+                icon.style.transform = 'rotate(0deg)';
+                icon.textContent = '▼';
             }
         }
 
