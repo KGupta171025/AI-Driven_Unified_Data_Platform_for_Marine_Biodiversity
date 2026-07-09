@@ -558,13 +558,14 @@ class UnifiedDataPlatform:
             'last_updated': self.last_update.strftime('%Y-%m-%d %H:%M:%S')
         }
 
-    def simulate_real_time_update(self):
+    def simulate_real_time_update(self, station_name=None, temp_drift=None, salinity_drift=None, ph_drift=None, do_drift=None, chlorophyll_drift=None, turbidity_drift=None):
         """Simulate real-time diurnal fluctuations and update status reports."""
         self.last_update = datetime.now()
         timestamp_str = self.last_update.strftime("%H:%M:%S")
         
-        # Randomly pick a station to update
-        station_name = np.random.choice(list(STATIONS.keys()))
+        # Randomly pick a station to update if not specified
+        if not station_name:
+            station_name = np.random.choice(list(STATIONS.keys()))
         station_mask = self.ocean_analyzer.data['station_name'] == station_name
         station_indices = self.ocean_analyzer.data[station_mask].index
         
@@ -572,14 +573,33 @@ class UnifiedDataPlatform:
             latest_idx = station_indices[-1]
             row = self.ocean_analyzer.data.loc[latest_idx].copy()
             
-            # Apply slight drift (diurnal cycle simulation)
-            temp_drift = np.random.normal(0.0, 0.2)
-            new_temp = row['temperature_c'] + temp_drift
+            # Apply slight drift (diurnal cycle simulation) or injected anomaly
+            t_drift = float(temp_drift) if temp_drift is not None else np.random.normal(0.0, 0.2)
+            s_drift = float(salinity_drift) if salinity_drift is not None else np.random.normal(0.0, 0.05)
+            p_drift = float(ph_drift) if ph_drift is not None else np.random.normal(0.0, 0.01)
+            d_drift = float(do_drift) if do_drift is not None else np.random.normal(0.0, 0.05)
+            c_drift = float(chlorophyll_drift) if chlorophyll_drift is not None else np.random.normal(0.0, 0.05)
+            tb_drift = float(turbidity_drift) if turbidity_drift is not None else np.random.normal(0.0, 0.02)
+            
+            new_temp = row['temperature_c'] + t_drift
+            new_salinity = row['salinity_psu'] + s_drift
+            new_ph = row['ph_level'] + p_drift
+            new_do = max(0.1, row['dissolved_oxygen_mg_l'] + d_drift)
+            new_chl = max(0.01, row['chlorophyll_a_mg_m3'] + c_drift)
+            new_turb = max(0.01, row['turbidity_ntu'] + tb_drift)
             
             # Constrain to realistic boundaries
             self.ocean_analyzer.data.at[latest_idx, 'temperature_c'] = round(new_temp, 2)
+            self.ocean_analyzer.data.at[latest_idx, 'salinity_psu'] = round(new_salinity, 2)
+            self.ocean_analyzer.data.at[latest_idx, 'ph_level'] = round(new_ph, 3)
+            self.ocean_analyzer.data.at[latest_idx, 'dissolved_oxygen_mg_l'] = round(new_do, 2)
+            self.ocean_analyzer.data.at[latest_idx, 'chlorophyll_a_mg_m3'] = round(new_chl, 3)
+            self.ocean_analyzer.data.at[latest_idx, 'turbidity_ntu'] = round(new_turb, 2)
             
             # Recheck anomaly status
+            features = ['temperature_c', 'salinity_psu', 'ph_level', 'dissolved_oxygen_oxygen_mg_l' if 'dissolved_oxygen_oxygen_mg_l' in row else 'dissolved_oxygen_mg_l', 'chlorophyll_a_mg_m3', 'turbidity_ntu']
+            # Wait, let's look at the features list used in the original code:
+            # features = ['temperature_c', 'salinity_psu', 'ph_level', 'dissolved_oxygen_mg_l', 'chlorophyll_a_mg_m3', 'turbidity_ntu']
             features = ['temperature_c', 'salinity_psu', 'ph_level', 'dissolved_oxygen_mg_l', 'chlorophyll_a_mg_m3', 'turbidity_ntu']
             sample = self.ocean_analyzer.data.loc[[latest_idx], features]
             sample_scaled = self.ocean_analyzer.scaler.transform(sample)
@@ -592,7 +612,7 @@ class UnifiedDataPlatform:
             if is_anomaly and not old_anomaly:
                 self.feed_logs.append({
                     "timestamp": timestamp_str,
-                    "message": f"🚨 WARNING: Anomaly detected at {station_name}: Temperature reached {new_temp:.1f}°C!",
+                    "message": f"🚨 WARNING: Anomaly detected at {station_name}: Temp={new_temp:.1f}°C, pH={new_ph:.2f}, DO={new_do:.1f}mg/L",
                     "type": "alert"
                 })
             elif not is_anomaly and old_anomaly:
@@ -604,7 +624,7 @@ class UnifiedDataPlatform:
             else:
                 self.feed_logs.append({
                     "timestamp": timestamp_str,
-                    "message": f"🔄 Sensor sync: {station_name} temperature updated to {new_temp:.1f}°C",
+                    "message": f"🔄 Sensor sync: {station_name} updated (Temp: {new_temp:.1f}°C, DO: {new_do:.1f} mg/L)",
                     "type": "update"
                 })
                 
@@ -706,7 +726,31 @@ def get_advanced_genomics():
 def update_data():
     """Manual endpoint trigger to test/force sensor variations."""
     try:
-        platform.simulate_real_time_update()
+        station_name = request.args.get('station_name')
+        temp_drift = request.args.get('temp_drift')
+        sal_drift = request.args.get('sal_drift')
+        ph_drift = request.args.get('ph_drift')
+        do_drift = request.args.get('do_drift')
+        chl_drift = request.args.get('chl_drift')
+        turb_drift = request.args.get('turb_drift')
+        
+        # Convert empty strings to None
+        temp_drift = float(temp_drift) if temp_drift else None
+        sal_drift = float(sal_drift) if sal_drift else None
+        ph_drift = float(ph_drift) if ph_drift else None
+        do_drift = float(do_drift) if do_drift else None
+        chl_drift = float(chl_drift) if chl_drift else None
+        turb_drift = float(turb_drift) if turb_drift else None
+
+        platform.simulate_real_time_update(
+            station_name=station_name if station_name else None,
+            temp_drift=temp_drift,
+            salinity_drift=sal_drift,
+            ph_drift=ph_drift,
+            do_drift=do_drift,
+            chlorophyll_drift=chl_drift,
+            turbidity_drift=turb_drift
+        )
         data = platform.get_dashboard_data()
         return jsonify({'status': 'success', 'data': data})
     except Exception as e:
